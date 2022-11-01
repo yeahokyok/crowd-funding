@@ -133,7 +133,6 @@ describe("CrowdFunding", () => {
             ).to.be.revertedWith("the goal has not reach")
         })
         it("should fail if the recipient is address 0", async () => {
-            console.log("deadline ", deadline)
             crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
             await crowdFunding.contribute({
                 value: goal,
@@ -311,8 +310,35 @@ describe("CrowdFunding", () => {
                 "no contribution"
             )
         })
-        xit("should update contributors", async () => {})
-        xit("should transfer eth to the contributor", async () => {})
+
+        it("should transfer eth to the contributor", async () => {
+            const contributeValue = ethers.utils.parseEther("0.01")
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            crowdFundingContributor1 = crowdFunding.connect(contributor1)
+
+            await crowdFundingContributor1.contribute({
+                value: contributeValue,
+            })
+
+            // time travel
+            await network.provider.send("evm_increaseTime", [86400 * 15])
+            await network.provider.send("evm_mine", [])
+
+            contributor1BalanceBefore = await contributor1.getBalance()
+            txResponse = await crowdFundingContributor1.refund()
+            const txReceipt = await txResponse.wait()
+            const { gasUsed, effectiveGasPrice } = txReceipt
+            const withdrawGasCost = gasUsed.mul(effectiveGasPrice)
+
+            contributor1BalanceAfter = await contributor1.getBalance()
+
+            expect(
+                contributor1BalanceBefore.add(contributeValue).toString()
+            ).to.be.equal(
+                contributor1BalanceAfter.add(withdrawGasCost).toString()
+            )
+        })
+
         xit("should emit Refund event", async () => {})
 
         afterEach(async () => {

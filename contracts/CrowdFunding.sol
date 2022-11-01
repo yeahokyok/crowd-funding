@@ -118,6 +118,10 @@ contract CrowdFunding {
         if (goal <= address(this).balance) revert("the goal has reached");
         if (contributors[msg.sender] == 0) revert("no contribution");
 
+        uint256 contributionValue = contributors[msg.sender];
         contributors[msg.sender] = 0;
+
+        (bool sent, ) = payable(msg.sender).call{value: contributionValue}("");
+        if (!sent) revert("fail to refund");
     }
 }
