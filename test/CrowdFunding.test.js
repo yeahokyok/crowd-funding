@@ -367,4 +367,40 @@ describe("CrowdFunding", () => {
             await ethers.provider.send("evm_mine", [])
         })
     })
+
+    describe("Approve", () => {
+        it("should fail if request id does not exist", async () => {
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            crowdFundingContributor1 = crowdFunding.connect(contributor1)
+
+            await crowdFundingContributor1.contribute({
+                value: ethers.utils.parseEther("0.01"),
+            })
+
+            // time travel
+            await network.provider.send("evm_increaseTime", [86400 * 15])
+            await network.provider.send("evm_mine", [])
+
+            await expect(
+                crowdFundingContributor1.approve(0)
+            ).to.be.revertedWith("no spending request")
+        })
+        xit("should fail if the contributor has already approve the request", async () => {})
+        xit("should fail if sender is not contributor", async () => {})
+        xit("should fail if the request has already completed", async () => {})
+        xit("should update approved list", async () => {})
+        xit("should update numberOfApproved of the request", async () => {})
+        xit("should set approved of the request to be true if 50% of contributors have approved", async () => {})
+        xit("should emit Approve", async () => {})
+
+        afterEach(async () => {
+            // reset time travel
+            const blockNumber = ethers.provider.getBlockNumber()
+            const block = await ethers.provider.getBlock(blockNumber)
+            const currentTimestamp = Math.floor(new Date().getTime() / 1000)
+            const secondsDiff = currentTimestamp - block.timestamp
+            await ethers.provider.send("evm_increaseTime", [secondsDiff])
+            await ethers.provider.send("evm_mine", [])
+        })
+    })
 })

@@ -1,4 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox")
+require("dotenv").config()
 
 /**
 --- hardhat-toolbox ---
@@ -12,4 +13,7 @@ solidity-coverage
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
     solidity: "0.8.14",
+    gasReporter: {
+        enabled: process.env.REPORT_GAS ? true : false,
+    },
 }

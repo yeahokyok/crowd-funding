@@ -127,4 +127,8 @@ contract CrowdFunding {
 
         emit Refund(msg.sender, contributionValue);
     }
+
+    function approve(uint256 _id) external {
+        if (spendingRequests.length <= _id) revert("no spending request");
+    }
 }
