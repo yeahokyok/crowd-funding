@@ -117,5 +117,7 @@ contract CrowdFunding {
     function refund() external payable deadlinePassed {
         if (goal <= address(this).balance) revert("the goal has reached");
         if (contributors[msg.sender] == 0) revert("no contribution");
+
+        contributors[msg.sender] = 0;
     }
 }

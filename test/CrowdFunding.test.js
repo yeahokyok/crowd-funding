@@ -294,7 +294,23 @@ describe("CrowdFunding", () => {
                 "no contribution"
             )
         })
-        xit("the contributor able to call refund only one time", async () => {})
+        it("the contributor able to call refund only one time", async () => {
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            crowdFundingContributor1 = crowdFunding.connect(contributor1)
+
+            await crowdFundingContributor1.contribute({
+                value: ethers.utils.parseEther("0.01"),
+            })
+
+            // time travel
+            await network.provider.send("evm_increaseTime", [86400 * 15])
+            await network.provider.send("evm_mine", [])
+
+            await crowdFundingContributor1.refund()
+            await expect(crowdFundingContributor1.refund()).to.be.revertedWith(
+                "no contribution"
+            )
+        })
         xit("should update contributors", async () => {})
         xit("should transfer eth to the contributor", async () => {})
         xit("should emit Refund event", async () => {})
