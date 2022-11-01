@@ -39,6 +39,7 @@ contract CrowdFunding {
         string description,
         uint256 value
     );
+    event Refund(address indexed contributor, uint256 value);
 
     // Modifiers
     modifier notPassedDeadline() {
@@ -121,7 +122,9 @@ contract CrowdFunding {
         uint256 contributionValue = contributors[msg.sender];
         contributors[msg.sender] = 0;
 
-        (bool sent, ) = payable(msg.sender).call{value: contributionValue}("");
+        (bool sent, ) = msg.sender.call{value: contributionValue}("");
         if (!sent) revert("fail to refund");
+
+        emit Refund(msg.sender, contributionValue);
     }
 }

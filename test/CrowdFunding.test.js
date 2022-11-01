@@ -339,7 +339,23 @@ describe("CrowdFunding", () => {
             )
         })
 
-        xit("should emit Refund event", async () => {})
+        it("should emit Refund event", async () => {
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            crowdFundingContributor1 = crowdFunding.connect(contributor1)
+
+            await crowdFundingContributor1.contribute({
+                value: ethers.utils.parseEther("0.01"),
+            })
+
+            // time travel
+            await network.provider.send("evm_increaseTime", [86400 * 15])
+            await network.provider.send("evm_mine", [])
+
+            await expect(await crowdFundingContributor1.refund()).to.emit(
+                crowdFunding,
+                "Refund"
+            )
+        })
 
         afterEach(async () => {
             // reset time travel
