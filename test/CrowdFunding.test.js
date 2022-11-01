@@ -249,7 +249,7 @@ describe("CrowdFunding", () => {
             crowdFundingContributor1 = crowdFunding.connect(contributor1)
 
             await crowdFundingContributor1.contribute({
-                value: ethers.utils.parseEther("0.1"),
+                value: ethers.utils.parseEther("0.01"),
             })
 
             await expect(
@@ -277,7 +277,23 @@ describe("CrowdFunding", () => {
                 "the goal has reached"
             )
         })
-        xit("the sender must be a contributor", async () => {})
+        it("the sender must be a contributor", async () => {
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            crowdFundingContributor1 = crowdFunding.connect(contributor1)
+            crowdFundingContributor2 = crowdFunding.connect(contributor2)
+
+            await crowdFundingContributor1.contribute({
+                value: ethers.utils.parseEther("0.01"),
+            })
+
+            // time travel
+            await network.provider.send("evm_increaseTime", [86400 * 15])
+            await network.provider.send("evm_mine", [])
+
+            await expect(crowdFundingContributor2.refund()).to.be.revertedWith(
+                "no contribution"
+            )
+        })
         xit("the contributor able to call refund only one time", async () => {})
         xit("should update contributors", async () => {})
         xit("should transfer eth to the contributor", async () => {})
