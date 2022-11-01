@@ -28,6 +28,10 @@ contract CrowdFunding {
     // spendingRequests index => contributor => bool
     mapping(uint256 => mapping(address => bool)) private isApproved;
 
+    // Errors
+    error DeadlinePassed();
+    error DeadlineNotPassed();
+
     // Events
     event Contribute(address indexed contributor, uint256 value);
     event CreateSpendingRequest(
@@ -38,7 +42,12 @@ contract CrowdFunding {
 
     // Modifiers
     modifier notPassedDeadline() {
-        if (block.timestamp > deadline) revert CrowdFunding__DeadlinePassed();
+        if (block.timestamp > deadline) revert DeadlinePassed();
+        _;
+    }
+
+    modifier deadlinePassed() {
+        if (block.timestamp < deadline) revert DeadlineNotPassed();
         _;
     }
 
@@ -103,5 +112,9 @@ contract CrowdFunding {
 
     function getSpendingRequestCount() external view returns (uint256 count) {
         return spendingRequests.length;
+    }
+
+    function refund() external payable deadlinePassed {
+        if (goal <= address(this).balance) revert("the goal has reached");
     }
 }
