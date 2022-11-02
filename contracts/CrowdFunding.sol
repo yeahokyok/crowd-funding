@@ -21,6 +21,7 @@ contract CrowdFunding {
         uint256 value;
         bool completed;
         uint256 numberOfApproved;
+        mapping(address => bool) approver;
     }
     Request[] private spendingRequests;
 
@@ -78,15 +79,14 @@ contract CrowdFunding {
         if (goal > address(this).balance) revert("the goal has not reach");
         if (_value > address(this).balance)
             revert("spending request amount is more than campaign balance");
-        spendingRequests.push(
-            Request({
-                recipient: _recipient,
-                description: _description,
-                value: _value,
-                completed: false,
-                numberOfApproved: 0
-            })
-        );
+
+        Request storage newRequest = spendingRequests.push();
+        newRequest.recipient = _recipient;
+        newRequest.description = _description;
+        newRequest.value = _value;
+        newRequest.completed = false;
+        newRequest.numberOfApproved = 0;
+
         emit CreateSpendingRequest(_recipient, _description, _value);
     }
 
@@ -101,7 +101,7 @@ contract CrowdFunding {
             uint256 numberOfApproved
         )
     {
-        Request memory request = spendingRequests[_index];
+        Request storage request = spendingRequests[_index];
         return (
             request.recipient,
             request.description,
@@ -131,5 +131,10 @@ contract CrowdFunding {
     function approve(uint256 _id) external {
         if (spendingRequests.length <= _id) revert("no spending request");
         if (contributors[msg.sender] == 0) revert("Only the contributors");
+
+        Request storage request = spendingRequests[_id];
+        if (request.approver[msg.sender])
+            revert("You have already approved the request");
+        request.approver[msg.sender] = true;
     }
 }

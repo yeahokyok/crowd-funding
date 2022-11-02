@@ -385,7 +385,30 @@ describe("CrowdFunding", () => {
                 crowdFundingContributor1.approve(0)
             ).to.be.revertedWith("no spending request")
         })
-        xit("should fail if the contributor has already approve the request", async () => {})
+        it("should fail if the contributor has already approve the request", async () => {
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
+
+            await crowdFundingContributor1.contribute({
+                value: ethers.utils.parseEther("0.1"),
+            })
+
+            // time travel
+            await network.provider.send("evm_increaseTime", [86400 * 15])
+            await network.provider.send("evm_mine", [])
+
+            await crowdFunding.createSpendingRequest(
+                recipient.address,
+                "test approve",
+                ethers.utils.parseEther("0.01")
+            )
+            // first time
+            await crowdFundingContributor1.approve(0)
+            await expect(
+                crowdFundingContributor1.approve(0)
+            ).to.be.revertedWith("You have already approved the request")
+        })
+
         it("should fail if sender is not contributor", async () => {
             crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
             crowdFundingContributor1 = crowdFunding.connect(account1)
@@ -409,7 +432,7 @@ describe("CrowdFunding", () => {
                 crowdFundingNonContributor.approve(0)
             ).to.be.revertedWith("Only the contributors")
         })
-        xit("should fail if the request has already completed", async () => {})
+        // it("should fail if the request has already completed", async () => {})
         xit("should update approved list", async () => {})
         xit("should update numberOfApproved of the request", async () => {})
         xit("should set approved of the request to be true if 50% of contributors have approved", async () => {})
