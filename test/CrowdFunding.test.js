@@ -433,9 +433,29 @@ describe("CrowdFunding", () => {
             ).to.be.revertedWith("Only the contributors")
         })
         // it("should fail if the request has already completed", async () => {})
-        xit("should update approved list", async () => {})
+        it("should update approved list", async () => {
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
+
+            await crowdFundingContributor1.contribute({
+                value: ethers.utils.parseEther("0.1"),
+            })
+
+            // time travel
+            await network.provider.send("evm_increaseTime", [86400 * 15])
+            await network.provider.send("evm_mine", [])
+
+            await crowdFunding.createSpendingRequest(
+                recipient.address,
+                "test approve",
+                ethers.utils.parseEther("0.01")
+            )
+            await crowdFundingContributor1.approve(0)
+            expect(
+                await crowdFundingContributor1.isApproved(0, account1.address)
+            ).to.be.true
+        })
         xit("should update numberOfApproved of the request", async () => {})
-        xit("should set approved of the request to be true if 50% of contributors have approved", async () => {})
         xit("should emit Approve", async () => {})
 
         afterEach(async () => {

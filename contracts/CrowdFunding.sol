@@ -21,13 +21,13 @@ contract CrowdFunding {
         uint256 value;
         bool completed;
         uint256 numberOfApproved;
-        mapping(address => bool) approver;
+        mapping(address => bool) approvers;
     }
     Request[] private spendingRequests;
 
     // contributor approved spending request
     // spendingRequests index => contributor => bool
-    mapping(uint256 => mapping(address => bool)) private isApproved;
+    // mapping(uint256 => mapping(address => bool)) private isApproved;
 
     // Errors
     error DeadlinePassed();
@@ -133,8 +133,16 @@ contract CrowdFunding {
         if (contributors[msg.sender] == 0) revert("Only the contributors");
 
         Request storage request = spendingRequests[_id];
-        if (request.approver[msg.sender])
+        if (request.approvers[msg.sender])
             revert("You have already approved the request");
-        request.approver[msg.sender] = true;
+        request.approvers[msg.sender] = true;
+    }
+
+    function isApproved(uint256 _requstId, address _contributor)
+        external
+        view
+        returns (bool)
+    {
+        return spendingRequests[_requstId].approvers[_contributor];
     }
 }
