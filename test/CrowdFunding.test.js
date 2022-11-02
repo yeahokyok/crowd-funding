@@ -9,20 +9,20 @@ describe("CrowdFunding", () => {
     let accounts
     let deployer
     let recipient
-    let contributor1
-    let contributor2
-    let contributor3
-    let contributor4
+    let account1
+    let account2
+    let account3
+    let account4
     let goal
 
     beforeEach(async () => {
         accounts = await ethers.getSigners()
         deployer = accounts[0]
         recipient = accounts[1]
-        contributor1 = accounts[2]
-        contributor2 = accounts[3]
-        contributor3 = accounts[4]
-        contributor4 = accounts[5]
+        account1 = accounts[2]
+        account2 = accounts[3]
+        account3 = accounts[4]
+        account4 = accounts[5]
 
         crowdFundingFactory = await ethers.getContractFactory("CrowdFunding")
         deadline = Math.floor(Date.now() / 1000) + 14 * 24 * 60 * 60 // + 14 days
@@ -245,7 +245,7 @@ describe("CrowdFunding", () => {
         it("should fail if the deadline has not reached yet", async () => {
             bigGoal = ethers.utils.parseEther("10")
             crowdFunding = await crowdFundingFactory.deploy(deadline, bigGoal)
-            crowdFundingContributor1 = crowdFunding.connect(contributor1)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
 
             await crowdFundingContributor1.contribute({
                 value: ethers.utils.parseEther("0.01"),
@@ -257,8 +257,8 @@ describe("CrowdFunding", () => {
         })
         it("should fail if the goal has reached", async () => {
             crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
-            crowdFundingContributor1 = crowdFunding.connect(contributor1)
-            crowdFundingContributor2 = crowdFunding.connect(contributor2)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
+            crowdFundingContributor2 = crowdFunding.connect(account2)
 
             await crowdFundingContributor1.contribute({
                 value: goal,
@@ -278,8 +278,8 @@ describe("CrowdFunding", () => {
         })
         it("the sender must be a contributor", async () => {
             crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
-            crowdFundingContributor1 = crowdFunding.connect(contributor1)
-            crowdFundingContributor2 = crowdFunding.connect(contributor2)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
+            crowdFundingNonContributor2 = crowdFunding.connect(account2)
 
             await crowdFundingContributor1.contribute({
                 value: ethers.utils.parseEther("0.01"),
@@ -289,13 +289,13 @@ describe("CrowdFunding", () => {
             await network.provider.send("evm_increaseTime", [86400 * 15])
             await network.provider.send("evm_mine", [])
 
-            await expect(crowdFundingContributor2.refund()).to.be.revertedWith(
-                "no contribution"
-            )
+            await expect(
+                crowdFundingNonContributor2.refund()
+            ).to.be.revertedWith("no contribution")
         })
         it("the contributor able to call refund only one time", async () => {
             crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
-            crowdFundingContributor1 = crowdFunding.connect(contributor1)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
 
             await crowdFundingContributor1.contribute({
                 value: ethers.utils.parseEther("0.01"),
@@ -314,7 +314,7 @@ describe("CrowdFunding", () => {
         it("should transfer eth to the contributor", async () => {
             const contributeValue = ethers.utils.parseEther("0.01")
             crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
-            crowdFundingContributor1 = crowdFunding.connect(contributor1)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
 
             await crowdFundingContributor1.contribute({
                 value: contributeValue,
@@ -324,13 +324,13 @@ describe("CrowdFunding", () => {
             await network.provider.send("evm_increaseTime", [86400 * 15])
             await network.provider.send("evm_mine", [])
 
-            contributor1BalanceBefore = await contributor1.getBalance()
+            contributor1BalanceBefore = await account1.getBalance()
             txResponse = await crowdFundingContributor1.refund()
             const txReceipt = await txResponse.wait()
             const { gasUsed, effectiveGasPrice } = txReceipt
             const withdrawGasCost = gasUsed.mul(effectiveGasPrice)
 
-            contributor1BalanceAfter = await contributor1.getBalance()
+            contributor1BalanceAfter = await account1.getBalance()
 
             expect(
                 contributor1BalanceBefore.add(contributeValue).toString()
@@ -341,7 +341,7 @@ describe("CrowdFunding", () => {
 
         it("should emit Refund event", async () => {
             crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
-            crowdFundingContributor1 = crowdFunding.connect(contributor1)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
 
             await crowdFundingContributor1.contribute({
                 value: ethers.utils.parseEther("0.01"),
@@ -371,7 +371,7 @@ describe("CrowdFunding", () => {
     describe("Approve", () => {
         it("should fail if request id does not exist", async () => {
             crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
-            crowdFundingContributor1 = crowdFunding.connect(contributor1)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
 
             await crowdFundingContributor1.contribute({
                 value: ethers.utils.parseEther("0.01"),
@@ -388,8 +388,8 @@ describe("CrowdFunding", () => {
         xit("should fail if the contributor has already approve the request", async () => {})
         it("should fail if sender is not contributor", async () => {
             crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
-            crowdFundingContributor1 = crowdFunding.connect(contributor1)
-            crowdFundingNonContributor = crowdFunding.connect(contributor2)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
+            crowdFundingNonContributor = crowdFunding.connect(account2)
 
             await crowdFundingContributor1.contribute({
                 value: ethers.utils.parseEther("0.1"),

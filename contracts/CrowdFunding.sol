@@ -130,7 +130,6 @@ contract CrowdFunding {
 
     function approve(uint256 _id) external {
         if (spendingRequests.length <= _id) revert("no spending request");
-        console.log("contributors[msg.sender] ", contributors[msg.sender]);
         if (contributors[msg.sender] == 0) revert("Only the contributors");
     }
 }
