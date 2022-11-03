@@ -351,7 +351,7 @@ describe("CrowdFunding", () => {
             await network.provider.send("evm_increaseTime", [86400 * 15])
             await network.provider.send("evm_mine", [])
 
-            await expect(await crowdFundingContributor1.refund()).to.emit(
+            await expect(crowdFundingContributor1.refund()).to.emit(
                 crowdFunding,
                 "Refund"
             )
@@ -482,7 +482,28 @@ describe("CrowdFunding", () => {
             const request = await crowdFundingContributor1.getSpendingRequest(0)
             expect(request.numberOfApproved).to.equal(2)
         })
-        xit("should emit Approve", async () => {})
+        it("should emit Approve", async () => {
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
+
+            await crowdFundingContributor1.contribute({
+                value: ethers.utils.parseEther("0.1"),
+            })
+
+            // time travel
+            await network.provider.send("evm_increaseTime", [86400 * 15])
+            await network.provider.send("evm_mine", [])
+
+            await crowdFunding.createSpendingRequest(
+                recipient.address,
+                "test approve",
+                ethers.utils.parseEther("0.01")
+            )
+            await expect(crowdFundingContributor1.approve(0)).to.emit(
+                crowdFunding,
+                "Approve"
+            )
+        })
 
         afterEach(async () => {
             // reset time travel

@@ -41,6 +41,7 @@ contract CrowdFunding {
         uint256 value
     );
     event Refund(address indexed contributor, uint256 value);
+    event Approve(uint256 reqestId, address approver);
 
     // Modifiers
     modifier notPassedDeadline() {
@@ -137,6 +138,8 @@ contract CrowdFunding {
             revert("You have already approved the request");
         request.approvers[msg.sender] = true;
         request.numberOfApproved += 1;
+
+        emit Approve(_id, msg.sender);
     }
 
     function isApproved(uint256 _requstId, address _contributor)
