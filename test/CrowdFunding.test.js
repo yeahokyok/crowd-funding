@@ -455,7 +455,33 @@ describe("CrowdFunding", () => {
                 await crowdFundingContributor1.isApproved(0, account1.address)
             ).to.be.true
         })
-        xit("should update numberOfApproved of the request", async () => {})
+        it("should update numberOfApproved of the request", async () => {
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
+            crowdFundingContributor2 = crowdFunding.connect(account2)
+
+            await crowdFundingContributor1.contribute({
+                value: ethers.utils.parseEther("0.1"),
+            })
+            await crowdFundingContributor2.contribute({
+                value: ethers.utils.parseEther("0.5"),
+            })
+
+            // time travel
+            await network.provider.send("evm_increaseTime", [86400 * 15])
+            await network.provider.send("evm_mine", [])
+
+            await crowdFunding.createSpendingRequest(
+                recipient.address,
+                "test approve",
+                ethers.utils.parseEther("0.01")
+            )
+            await crowdFundingContributor1.approve(0)
+            await crowdFundingContributor2.approve(0)
+
+            const request = await crowdFundingContributor1.getSpendingRequest(0)
+            expect(request.numberOfApproved).to.equal(2)
+        })
         xit("should emit Approve", async () => {})
 
         afterEach(async () => {

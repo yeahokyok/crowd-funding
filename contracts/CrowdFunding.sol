@@ -136,6 +136,7 @@ contract CrowdFunding {
         if (request.approvers[msg.sender])
             revert("You have already approved the request");
         request.approvers[msg.sender] = true;
+        request.numberOfApproved += 1;
     }
 
     function isApproved(uint256 _requstId, address _contributor)
