@@ -32,6 +32,8 @@ contract CrowdFunding {
     // Errors
     error DeadlinePassed();
     error DeadlineNotPassed();
+    error NotContributor();
+    error NotEnoughEth();
 
     // Events
     event Contribute(address indexed contributor, uint256 value);
@@ -61,8 +63,20 @@ contract CrowdFunding {
     }
 
     function contribute() external payable notPassedDeadline {
+        // -------- gas use experiment --------
+
+        // Min         ·  Max        ·  Avg
+        // 52601  ·      69701  ·      68146
         if (msg.value < MINIMUM_CONTRIBUTION)
             revert("You need to spend more ETH to contribute.");
+
+        // 52601  ·      69701  ·      68146
+        // if (msg.value < MINIMUM_CONTRIBUTION) revert NotEnoughEth();
+
+        // 52601  ·      69701  ·      68146
+        // require(msg.value >= MINIMUM_CONTRIBUTION);
+
+        // ------------------------------------
         contributors[msg.sender] += msg.value;
         numberOfContributors += 1;
 

@@ -62,7 +62,7 @@ describe("CrowdFunding", () => {
             ).to.be.revertedWithCustomError(crowdFunding, "DeadlinePassed")
         })
 
-        it("should fail if contribute less than 0.01 eth", async () => {
+        xit("should fail if contribute less than 0.01 eth", async () => {
             crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
             const lessMinimumContribution = ethers.utils.parseEther("0.001")
             await expect(
