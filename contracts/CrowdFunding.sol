@@ -64,16 +64,18 @@ contract CrowdFunding {
 
     function contribute() external payable notPassedDeadline {
         // -------- gas use experiment --------
-
         // Min         ·  Max        ·  Avg
         // 52601  ·      69701  ·      68146
+        // Try on Hardhat 69701
         if (msg.value < MINIMUM_CONTRIBUTION)
             revert("You need to spend more ETH to contribute.");
 
         // 52601  ·      69701  ·      68146
+        // Try on Hardhat 69701
         // if (msg.value < MINIMUM_CONTRIBUTION) revert NotEnoughEth();
 
         // 52601  ·      69701  ·      68146
+        /// Try on Hardhat 69701
         // require(msg.value >= MINIMUM_CONTRIBUTION);
 
         // ------------------------------------
