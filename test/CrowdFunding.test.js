@@ -229,16 +229,6 @@ describe("CrowdFunding", () => {
                 )
             ).to.emit(crowdFunding, "CreateSpendingRequest")
         })
-
-        afterEach(async () => {
-            // reset time travel
-            const blockNumber = ethers.provider.getBlockNumber()
-            const block = await ethers.provider.getBlock(blockNumber)
-            const currentTimestamp = Math.floor(new Date().getTime() / 1000)
-            const secondsDiff = currentTimestamp - block.timestamp
-            await ethers.provider.send("evm_increaseTime", [secondsDiff])
-            await ethers.provider.send("evm_mine", [])
-        })
     })
 
     describe("refund", () => {
@@ -355,16 +345,6 @@ describe("CrowdFunding", () => {
                 crowdFunding,
                 "Refund"
             )
-        })
-
-        afterEach(async () => {
-            // reset time travel
-            const blockNumber = ethers.provider.getBlockNumber()
-            const block = await ethers.provider.getBlock(blockNumber)
-            const currentTimestamp = Math.floor(new Date().getTime() / 1000)
-            const secondsDiff = currentTimestamp - block.timestamp
-            await ethers.provider.send("evm_increaseTime", [secondsDiff])
-            await ethers.provider.send("evm_mine", [])
         })
     })
 
@@ -504,15 +484,187 @@ describe("CrowdFunding", () => {
                 "Approve"
             )
         })
+    })
 
-        afterEach(async () => {
-            // reset time travel
-            const blockNumber = ethers.provider.getBlockNumber()
-            const block = await ethers.provider.getBlock(blockNumber)
-            const currentTimestamp = Math.floor(new Date().getTime() / 1000)
-            const secondsDiff = currentTimestamp - block.timestamp
-            await ethers.provider.send("evm_increaseTime", [secondsDiff])
-            await ethers.provider.send("evm_mine", [])
+    describe("executeRequest", () => {
+        it("should fail if the request does not exist", async () => {
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+
+            await expect(
+                crowdFundingContributor1.executeRequest(9999)
+            ).to.be.revertedWith("the request does not exist")
         })
+        it("only owner able to call execute request", async () => {
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
+
+            await crowdFundingContributor1.contribute({
+                value: goal,
+            })
+
+            // time travel
+            await network.provider.send("evm_increaseTime", [86400 * 15])
+            await network.provider.send("evm_mine", [])
+
+            await crowdFunding.createSpendingRequest(
+                recipient.address,
+                "test execute request",
+                ethers.utils.parseEther("0.01")
+            )
+
+            await expect(
+                crowdFundingContributor1.executeRequest(0)
+            ).to.be.revertedWith("Only owner")
+        })
+        it("should fail if approvers less than 50% of the contributors", async () => {
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
+            crowdFundingContributor2 = crowdFunding.connect(account2)
+            crowdFundingContributor3 = crowdFunding.connect(account3)
+
+            await crowdFundingContributor1.contribute({
+                value: goal,
+            })
+            await crowdFundingContributor2.contribute({
+                value: goal,
+            })
+            await crowdFundingContributor3.contribute({
+                value: goal,
+            })
+
+            // time travel
+            await network.provider.send("evm_increaseTime", [86400 * 15])
+            await network.provider.send("evm_mine", [])
+
+            await crowdFunding.createSpendingRequest(
+                recipient.address,
+                "test execute request",
+                ethers.utils.parseEther("0.01")
+            )
+
+            await crowdFundingContributor1.approve(0)
+
+            await expect(crowdFunding.executeRequest(0)).to.be.revertedWith(
+                "disappoved"
+            )
+        })
+        it("should fail if the request has already completed", async () => {
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
+            crowdFundingContributor2 = crowdFunding.connect(account2)
+            crowdFundingContributor3 = crowdFunding.connect(account3)
+
+            await crowdFundingContributor1.contribute({
+                value: goal,
+            })
+            await crowdFundingContributor2.contribute({
+                value: goal,
+            })
+            await crowdFundingContributor3.contribute({
+                value: goal,
+            })
+
+            // time travel
+            await network.provider.send("evm_increaseTime", [86400 * 15])
+            await network.provider.send("evm_mine", [])
+
+            await crowdFunding.createSpendingRequest(
+                recipient.address,
+                "test execute request",
+                ethers.utils.parseEther("0.01")
+            )
+
+            await crowdFundingContributor1.approve(0)
+            await crowdFundingContributor2.approve(0)
+
+            await crowdFunding.executeRequest(0)
+
+            await expect(crowdFunding.executeRequest(0)).to.be.revertedWith(
+                "the request has already completed"
+            )
+        })
+        it("should send eth to recipient", async () => {
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
+            crowdFundingContributor2 = crowdFunding.connect(account2)
+            crowdFundingContributor3 = crowdFunding.connect(account3)
+
+            await crowdFundingContributor1.contribute({
+                value: goal,
+            })
+            await crowdFundingContributor2.contribute({
+                value: goal,
+            })
+            await crowdFundingContributor3.contribute({
+                value: goal,
+            })
+
+            // time travel
+            await network.provider.send("evm_increaseTime", [86400 * 15])
+            await network.provider.send("evm_mine", [])
+
+            const requestValue = ethers.utils.parseEther("0.01")
+            await crowdFunding.createSpendingRequest(
+                recipient.address,
+                "test execute request",
+                requestValue
+            )
+
+            await crowdFundingContributor1.approve(0)
+            await crowdFundingContributor2.approve(0)
+
+            const recipientBalanceBefore = await recipient.getBalance()
+            await crowdFunding.executeRequest(0)
+            const recipientBalanceAfter = await recipient.getBalance()
+
+            expect(recipientBalanceBefore.add(requestValue)).to.be.equal(
+                recipientBalanceAfter
+            )
+        })
+        it("should emit executeRequest", async () => {
+            crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            crowdFundingContributor1 = crowdFunding.connect(account1)
+            crowdFundingContributor2 = crowdFunding.connect(account2)
+            crowdFundingContributor3 = crowdFunding.connect(account3)
+
+            await crowdFundingContributor1.contribute({
+                value: goal,
+            })
+            await crowdFundingContributor2.contribute({
+                value: goal,
+            })
+            await crowdFundingContributor3.contribute({
+                value: goal,
+            })
+
+            // time travel
+            await network.provider.send("evm_increaseTime", [86400 * 15])
+            await network.provider.send("evm_mine", [])
+
+            const requestValue = ethers.utils.parseEther("0.01")
+            await crowdFunding.createSpendingRequest(
+                recipient.address,
+                "test execute request",
+                requestValue
+            )
+
+            await crowdFundingContributor1.approve(0)
+            await crowdFundingContributor2.approve(0)
+
+            await expect(crowdFunding.executeRequest(0)).to.emit(
+                crowdFunding,
+                "Spend"
+            )
+        })
+    })
+
+    afterEach(async () => {
+        // reset time travel
+        const blockNumber = ethers.provider.getBlockNumber()
+        const block = await ethers.provider.getBlock(blockNumber)
+        const currentTimestamp = Math.floor(new Date().getTime() / 1000)
+        const secondsDiff = currentTimestamp - block.timestamp
+        await ethers.provider.send("evm_increaseTime", [secondsDiff])
+        await ethers.provider.send("evm_mine", [])
     })
 })

@@ -3,8 +3,6 @@ pragma solidity 0.8.14;
 
 import "hardhat/console.sol";
 
-error CrowdFunding__DeadlinePassed();
-
 contract CrowdFunding {
     uint256 public constant MINIMUM_CONTRIBUTION = 0.01 ether;
     address public immutable i_owner;
@@ -25,10 +23,6 @@ contract CrowdFunding {
     }
     Request[] private spendingRequests;
 
-    // contributor approved spending request
-    // spendingRequests index => contributor => bool
-    // mapping(uint256 => mapping(address => bool)) private isApproved;
-
     // Errors
     error DeadlinePassed();
     error DeadlineNotPassed();
@@ -44,6 +38,11 @@ contract CrowdFunding {
     );
     event Refund(address indexed contributor, uint256 value);
     event Approve(uint256 reqestId, address approver);
+    event Spend(
+        uint256 indexed reqestId,
+        address indexed recipient,
+        uint256 value
+    );
 
     // Modifiers
     modifier notPassedDeadline() {
@@ -85,6 +84,8 @@ contract CrowdFunding {
         emit Contribute(msg.sender, msg.value);
     }
 
+    // TODO deadline?
+    // TODO lock fund?
     function createSpendingRequest(
         address payable _recipient,
         string calldata _description,
@@ -158,11 +159,35 @@ contract CrowdFunding {
         emit Approve(_id, msg.sender);
     }
 
-    function isApproved(uint256 _requstId, address _contributor)
+    function isApproved(uint256 _requestId, address _contributor)
         external
         view
         returns (bool)
     {
-        return spendingRequests[_requstId].approvers[_contributor];
+        return spendingRequests[_requestId].approvers[_contributor];
+    }
+
+    function executeRequest(uint256 _requestId) external {
+        if (spendingRequests.length <= _requestId)
+            revert("the request does not exist");
+        if (spendingRequests[_requestId].completed)
+            revert("the request has already completed");
+        if (i_owner != msg.sender) revert("Only owner");
+
+        uint256 approvalPercent = (spendingRequests[_requestId]
+            .numberOfApproved * 100) / numberOfContributors;
+
+        if (approvalPercent < 50) revert("disappoved");
+
+        spendingRequests[_requestId].completed = true;
+        (bool sent, ) = spendingRequests[_requestId].recipient.call{
+            value: spendingRequests[_requestId].value
+        }("");
+        require(sent, "Faild to sent eth");
+        emit Spend(
+            _requestId,
+            spendingRequests[_requestId].recipient,
+            spendingRequests[_requestId].value
+        );
     }
 }
