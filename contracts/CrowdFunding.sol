@@ -84,6 +84,14 @@ contract CrowdFunding {
         emit Contribute(msg.sender, msg.value);
     }
 
+    function getContributeValue(address _address)
+        external
+        view
+        returns (uint256)
+    {
+        return contributors[_address];
+    }
+
     // TODO deadline?
     // TODO lock fund?
     function createSpendingRequest(

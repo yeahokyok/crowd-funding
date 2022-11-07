@@ -70,17 +70,21 @@ describe("CrowdFunding", () => {
             ).to.be.revertedWith("You need to spend more ETH to contribute.")
         })
 
-        xit("should update contributors", async () => {
+        it("should update contributors", async () => {
             crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
-            await crowdFunding.contribute({ value: minimumContribution })
-            expect(await crowdFunding.contributors(deployer.address)).to.equal(
-                []
-            )
+            crowdFundingContributor1 = crowdFunding.connect(account1)
+
+            await crowdFundingContributor1.contribute({
+                value: minimumContribution,
+            })
+            expect(
+                await crowdFunding.getContributeValue(account1.address)
+            ).to.equal(minimumContribution)
         })
 
         it("should update numberOfContributors", async () => {
-            expect(await crowdFunding.numberOfContributors()).to.equal(0)
             crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
+            expect(await crowdFunding.numberOfContributors()).to.equal(0)
             await crowdFunding.contribute({
                 value: minimumContribution,
             })
