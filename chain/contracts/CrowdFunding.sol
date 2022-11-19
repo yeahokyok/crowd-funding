@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.14;
 
-import "hardhat/console.sol";
-
 contract CrowdFunding {
     uint256 public constant MINIMUM_CONTRIBUTION = 0.01 ether;
     address public immutable i_owner;

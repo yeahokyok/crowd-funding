@@ -1,25 +1,17 @@
-import logo from './logo.svg';
-import './App.css';
+import { useAccount, useBalance, useContractRead } from 'wagmi'
+import { ConnectKitButton } from 'connectkit'
+
+import Funding from './components/Funding.component'
+
+import './App.css'
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    return (
+        <div className="App">
+            <Funding />
+            <ConnectKitButton showBalance={false} showAvatar="true" />
+        </div>
+    )
 }
 
-export default App;
+export default App
