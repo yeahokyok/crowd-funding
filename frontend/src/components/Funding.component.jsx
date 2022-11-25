@@ -1,28 +1,52 @@
-import { useContractReads } from 'wagmi'
+import { ethers } from 'ethers'
+import { useContractReads, useBalance } from 'wagmi'
 import {
     chakra,
     Box,
-    Stack,
     Text,
     Image,
     Container,
-    Button,
-    ButtonProps,
     useColorModeValue,
     Progress,
+    Spacer,
+    Flex,
 } from '@chakra-ui/react'
 import { TimeIcon } from '@chakra-ui/icons'
+
+import Contribute from './Contribute.component'
 import { crowdFundingContract } from '../constants'
 
 const Funding = () => {
+    const { data: contractBalance } = useBalance({
+        address: crowdFundingContract.address,
+    })
+
     const { data } = useContractReads({
         contracts: [
             {
                 ...crowdFundingContract,
                 functionName: 'goal',
             },
+            {
+                ...crowdFundingContract,
+                functionName: 'deadline',
+            },
+            {
+                ...crowdFundingContract,
+                functionName: 'MINIMUM_CONTRIBUTION',
+            },
         ],
     })
+    const [goalInWei, deadline, minimumContributionInWei] = data
+    const goal = ethers.utils.formatUnits(goalInWei)
+    const minimumContribution = ethers.utils.formatUnits(
+        minimumContributionInWei,
+    )
+
+    const today = Date.now() / 1000
+    const timeLeft = deadline - today
+    const daysLeft = Math.floor(timeLeft / 86400)
+    const progress = (contractBalance.value * 100) / goalInWei
 
     return (
         <Container p={{ base: 5, md: 10 }}>
@@ -55,40 +79,26 @@ const Funding = () => {
                         </Text>
                     </Box>
                     <Box>
-                        <Progress value={80} />
+                        <Progress value={progress} />
+                        <Flex>
+                            <Box>
+                                {contractBalance?.formatted}{' '}
+                                {contractBalance?.symbol}
+                            </Box>
+                            <Spacer />
+                            <Box>
+                                {goal} {contractBalance?.symbol}
+                            </Box>
+                        </Flex>
                     </Box>
                     <Box>
-                        <TimeIcon /> 15 days left.
+                        <TimeIcon /> {daysLeft} days left.
                     </Box>
-
-                    <Stack
-                        justify="space-between"
-                        direction={{ base: 'column', sm: 'row' }}
-                        spacing={{ base: 2, sm: 0 }}
-                    >
-                        <CustomButton variant="outline">
-                            Not a member?
-                        </CustomButton>
-                        <CustomButton colorScheme="teal" variant="solid">
-                            Access Now
-                        </CustomButton>
-                    </Stack>
                 </Box>
+                <Contribute />
             </Box>
         </Container>
     )
 }
 
-const CustomButton = ({ children, ...props }) => {
-    return (
-        <Button
-            textTransform="uppercase"
-            lineHeight="inherit"
-            rounded="md"
-            {...props}
-        >
-            {children}
-        </Button>
-    )
-}
 export default Funding

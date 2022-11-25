@@ -1,4 +1,3 @@
-import { useAccount, useBalance, useContractRead } from 'wagmi'
 import { ConnectKitButton } from 'connectkit'
 
 import Funding from './components/Funding.component'

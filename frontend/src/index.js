@@ -11,14 +11,15 @@ import App from './App'
 import './index.css'
 
 const { chains, provider } = configureChains(
-    [chain.hardhat, chain.goerli],
+    // [chain.hardhat, chain.goerli],
+    [chain.goerli],
 
     [
-        jsonRpcProvider({
-            rpc: () => ({
-                http: process.env.REACT_APP_RPC_URL,
-            }),
-        }),
+        // jsonRpcProvider({
+        //     rpc: () => ({
+        //         http: process.env.REACT_APP_RPC_URL,
+        //     }),
+        // }),
         alchemyProvider({ apiKey: process.env.REACT_APP_ALCHEMY_API_KEY }),
     ],
 )
