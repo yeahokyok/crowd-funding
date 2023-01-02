@@ -42,7 +42,7 @@ describe("CrowdFunding", () => {
 
         it("deployment should assign the owner", async () => {
             crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
-            expect(await crowdFunding.i_owner()).to.equal(deployer.address)
+            expect(await crowdFunding.owner()).to.equal(deployer.address)
         })
     })
 

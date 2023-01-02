@@ -7,8 +7,8 @@ import './App.css'
 function App() {
     return (
         <div className="App">
-            <Funding />
             <ConnectKitButton showBalance={false} showAvatar="true" />
+            {/* <Funding /> */}
         </div>
     )
 }

@@ -1,9 +1,9 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.14;
 
 contract CrowdFunding {
     uint256 public constant MINIMUM_CONTRIBUTION = 0.01 ether;
-    address public immutable i_owner;
+    address public immutable owner;
     uint256 public goal;
     uint32 public deadline;
     uint256 public numberOfContributors;
@@ -54,28 +54,17 @@ contract CrowdFunding {
     }
 
     constructor(uint32 _deadline, uint256 _goal) {
-        i_owner = msg.sender;
+        owner = msg.sender;
         deadline = _deadline;
         goal = _goal;
     }
 
     function contribute() external payable notPassedDeadline {
-        // -------- gas use experiment --------
-        // Min         ·  Max        ·  Avg
-        // 52601  ·      69701  ·      68146
-        // Try on Hardhat 69701
-        if (msg.value < MINIMUM_CONTRIBUTION)
-            revert("You need to spend more ETH to contribute.");
+        require(
+            msg.value >= MINIMUM_CONTRIBUTION,
+            "You need to spend more ETH to contribute."
+        );
 
-        // 52601  ·      69701  ·      68146
-        // Try on Hardhat 69701
-        // if (msg.value < MINIMUM_CONTRIBUTION) revert NotEnoughEth();
-
-        // 52601  ·      69701  ·      68146
-        /// Try on Hardhat 69701
-        // require(msg.value >= MINIMUM_CONTRIBUTION);
-
-        // ------------------------------------
         contributors[msg.sender] += msg.value;
         numberOfContributors += 1;
 
@@ -178,7 +167,7 @@ contract CrowdFunding {
             revert("the request does not exist");
         if (spendingRequests[_requestId].completed)
             revert("the request has already completed");
-        if (i_owner != msg.sender) revert("Only owner");
+        if (owner != msg.sender) revert("Only owner");
 
         uint256 approvalPercent = (spendingRequests[_requestId]
             .numberOfApproved * 100) / numberOfContributors;
