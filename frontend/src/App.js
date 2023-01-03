@@ -8,7 +8,7 @@ function App() {
     return (
         <div className="App">
             <ConnectKitButton showBalance={false} showAvatar="true" />
-            {/* <Funding /> */}
+            <Funding />
         </div>
     )
 }

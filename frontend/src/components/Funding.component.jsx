@@ -17,6 +17,7 @@ import Contribute from './Contribute.component'
 import { crowdFundingContract } from '../constants'
 
 const Funding = () => {
+    console.log('Funding')
     const { data: contractBalance } = useBalance({
         address: crowdFundingContract.address,
     })

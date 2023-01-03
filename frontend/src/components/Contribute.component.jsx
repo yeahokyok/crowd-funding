@@ -28,8 +28,6 @@ const Contribute = () => {
     })
     const { data: txData, write } = useContractWrite(config)
 
-    console.log(txData)
-
     return (
         <>
             <HStack m="5">

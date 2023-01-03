@@ -36,13 +36,13 @@ const root = ReactDOM.createRoot(document.getElementById('root'))
 
 root.render(
     <React.StrictMode>
-        <WagmiConfig client={client}>
-            <ConnectKitProvider>
-                <ChakraProvider>
+        <ChakraProvider>
+            <WagmiConfig client={client}>
+                <ConnectKitProvider>
                     <App />
-                </ChakraProvider>
-            </ConnectKitProvider>
-        </WagmiConfig>
+                </ConnectKitProvider>
+            </WagmiConfig>
+        </ChakraProvider>
     </React.StrictMode>,
 )
 
