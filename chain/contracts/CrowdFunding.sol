@@ -25,7 +25,6 @@ contract CrowdFunding {
     error DeadlinePassed();
     error DeadlineNotPassed();
     error NotContributor();
-    error NotEnoughEth();
 
     // Events
     event Contribute(address indexed contributor, uint256 value);
@@ -50,6 +49,11 @@ contract CrowdFunding {
 
     modifier deadlinePassed() {
         if (block.timestamp < deadline) revert DeadlineNotPassed();
+        _;
+    }
+
+    modifier onlyContributor() {
+        if (contributors[msg.sender] == 0) revert NotContributor();
         _;
     }
 
@@ -129,9 +133,8 @@ contract CrowdFunding {
         return spendingRequests.length;
     }
 
-    function refund() external payable deadlinePassed {
+    function refund() external payable deadlinePassed onlyContributor {
         require(goal > address(this).balance, "the goal has reached");
-        require(contributors[msg.sender] != 0, "no contribution"); // TODO custom error
 
         uint256 contributionValue = contributors[msg.sender];
         contributors[msg.sender] = 0;
@@ -142,9 +145,8 @@ contract CrowdFunding {
         emit Refund(msg.sender, contributionValue);
     }
 
-    function approve(uint256 _id) external {
+    function approve(uint256 _id) external onlyContributor {
         require(spendingRequests.length > _id, "no spending request");
-        require(contributors[msg.sender] != 0, "Only the contributors"); // TODO custom error
 
         Request storage request = spendingRequests[_id];
         require(

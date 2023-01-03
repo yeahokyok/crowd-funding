@@ -285,7 +285,7 @@ describe("CrowdFunding", () => {
 
             await expect(
                 crowdFundingNonContributor2.refund()
-            ).to.be.revertedWith("no contribution")
+            ).to.be.revertedWithCustomError(crowdFunding, "NotContributor")
         })
         it("the contributor able to call refund only one time", async () => {
             crowdFunding = await crowdFundingFactory.deploy(deadline, goal)
@@ -300,9 +300,9 @@ describe("CrowdFunding", () => {
             await network.provider.send("evm_mine", [])
 
             await crowdFundingContributor1.refund()
-            await expect(crowdFundingContributor1.refund()).to.be.revertedWith(
-                "no contribution"
-            )
+            await expect(
+                crowdFundingContributor1.refund()
+            ).to.be.revertedWithCustomError(crowdFunding, "NotContributor")
         })
 
         it("should transfer eth to the contributor", async () => {
@@ -414,7 +414,7 @@ describe("CrowdFunding", () => {
 
             await expect(
                 crowdFundingNonContributor.approve(0)
-            ).to.be.revertedWith("Only the contributors")
+            ).to.be.revertedWithCustomError(crowdFunding, "NotContributor")
         })
         // it("should fail if the request has already completed", async () => {})
         it("should update approved list", async () => {
