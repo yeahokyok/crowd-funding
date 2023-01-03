@@ -86,12 +86,13 @@ contract CrowdFunding {
         string calldata _description,
         uint256 _value
     ) external {
-        if (_recipient == address(0)) revert("recipient cannot be address 0");
-        if (deadline > block.timestamp)
-            revert("the deadline has not reach yet");
-        if (goal > address(this).balance) revert("the goal has not reach");
-        if (_value > address(this).balance)
-            revert("spending request amount is more than campaign balance");
+        require(_recipient != address(0), "recipient cannot be address 0");
+        require(deadline <= block.timestamp, "the deadline has not reach yet");
+        require(goal <= address(this).balance, "the goal has not reach");
+        require(
+            _value <= address(this).balance,
+            "spending request amount is more than campaign balance"
+        );
 
         Request storage newRequest = spendingRequests.push();
         newRequest.recipient = _recipient;
@@ -129,25 +130,28 @@ contract CrowdFunding {
     }
 
     function refund() external payable deadlinePassed {
-        if (goal <= address(this).balance) revert("the goal has reached");
-        if (contributors[msg.sender] == 0) revert("no contribution");
+        require(goal > address(this).balance, "the goal has reached");
+        require(contributors[msg.sender] != 0, "no contribution"); // TODO custom error
 
         uint256 contributionValue = contributors[msg.sender];
         contributors[msg.sender] = 0;
 
         (bool sent, ) = msg.sender.call{value: contributionValue}("");
-        if (!sent) revert("fail to refund");
+        require(sent, "fail to refund");
 
         emit Refund(msg.sender, contributionValue);
     }
 
     function approve(uint256 _id) external {
-        if (spendingRequests.length <= _id) revert("no spending request");
-        if (contributors[msg.sender] == 0) revert("Only the contributors");
+        require(spendingRequests.length > _id, "no spending request");
+        require(contributors[msg.sender] != 0, "Only the contributors"); // TODO custom error
 
         Request storage request = spendingRequests[_id];
-        if (request.approvers[msg.sender])
-            revert("You have already approved the request");
+        require(
+            !request.approvers[msg.sender],
+            "You have already approved the request"
+        );
+
         request.approvers[msg.sender] = true;
         request.numberOfApproved += 1;
 
@@ -163,16 +167,20 @@ contract CrowdFunding {
     }
 
     function executeRequest(uint256 _requestId) external {
-        if (spendingRequests.length <= _requestId)
-            revert("the request does not exist");
-        if (spendingRequests[_requestId].completed)
-            revert("the request has already completed");
-        if (owner != msg.sender) revert("Only owner");
+        require(
+            spendingRequests.length > _requestId,
+            "the request does not exist"
+        );
+        require(
+            !spendingRequests[_requestId].completed,
+            "the request has already completed"
+        );
+        require(owner == msg.sender, "Only owner");
 
         uint256 approvalPercent = (spendingRequests[_requestId]
             .numberOfApproved * 100) / numberOfContributors;
 
-        if (approvalPercent < 50) revert("disappoved");
+        require(approvalPercent >= 50, "disappoved");
 
         spendingRequests[_requestId].completed = true;
         (bool sent, ) = spendingRequests[_requestId].recipient.call{

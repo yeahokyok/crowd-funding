@@ -26,3 +26,4 @@ remix-compiler.config.js
 deployments/
 
 note
+contractAddresses.json
